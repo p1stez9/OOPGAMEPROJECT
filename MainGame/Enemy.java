@@ -29,8 +29,8 @@ public class Enemy {
     }
 
     public void setDefaultValues() {
-        worldX = gp.titlesize * 25;
-        worldY = gp.titlesize * 25;
+        worldX = gp.titlesize * 30;
+        worldY = gp.titlesize * 30;
         speed = 1;
         direction = random.nextInt(4); // สุ่มทิศทางเริ่มต้น
     }

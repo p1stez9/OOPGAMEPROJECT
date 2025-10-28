@@ -15,7 +15,7 @@ public class TileManager{
     public TileManager(GamePanle gp) {
         this.gp = gp;
         
-        tile = new Tile[10];
+        tile = new Tile[11];
         mapTileNum = new int[gp.maxWorldCol][gp.maxWorldRow];
 
         getTileImage();
@@ -41,6 +41,30 @@ public class TileManager{
 
             tile[4] = new Tile();
             tile[4].image = ImageIO.read(getClass().getResource("result_sand.jpg"));
+
+            tile[5] = new Tile();
+            tile[5].image = ImageIO.read(getClass().getResource("result_1.png")); // stone
+            tile[5].collision = true;
+
+            tile[6] = new Tile();
+            tile[6].image = ImageIO.read(getClass().getResource("result_2.png")); // coffin
+            tile[6].collision = true;
+
+            tile[7] = new Tile();
+            tile[7].image = ImageIO.read(getClass().getResource("result_3.png")); // rock grass black
+            tile[7].collision = true;
+
+            tile[8] = new Tile();
+            tile[8].image = ImageIO.read(getClass().getResource("result_4.png")); // tree
+            tile[8].collision = true;
+
+            tile[9] = new Tile();
+            tile[9].image = ImageIO.read(getClass().getResource("result_5.png")); // rock stone black
+            tile[9].collision = true;
+
+            tile[10] = new Tile();
+            tile[10].image = ImageIO.read(getClass().getResource("result_dust.png")); // dust
+            tile[10].collision = true;
             
 
 
@@ -81,37 +105,33 @@ public class TileManager{
             e.printStackTrace(); // แสดง error เพื่อ debug
         }
     }
-    public void draw(Graphics2D g2) {
-        int worldCol = 0;
-        int worldRow = 0;
-        
-        // คำนวณกล้องโดยยึดตามผู้เล่นและ clamp ไม่ให้ออกนอกโลก
+    
+        public void draw(Graphics2D g2) {
+        // คำนวณกล้องแบบ free camera (ไม่ clamp)
         int camX = gp.player1.worldX - gp.player1.screenX;
         int camY = gp.player1.worldY - gp.player1.screenY;
-        camX = Math.max(0, Math.min(camX, gp.worldWidth - gp.Widthscreen));
-        camY = Math.max(0, Math.min(camY, gp.worldHeight - gp.Hightscreen));
 
-        while(worldRow < gp.maxWorldRow && worldCol < gp.maxWorldCol) {
+        for (int row = 0; row < gp.maxWorldRow; row++) {
+            for (int col = 0; col < gp.maxWorldCol; col++) {
 
-            int tileNum = mapTileNum[worldCol][worldRow];
+                int worldX = col * gp.titlesize;
+                int worldY = row * gp.titlesize;
+                int screenX = worldX - camX;
+                int screenY = worldY - camY;
 
-            int worldX = worldCol * gp.titlesize;
-            int worldY = worldRow * gp.titlesize;
-            int screenX = worldX - camX;
-            int screenY = worldY - camY;
+                // วาด tile[0] เป็นพื้นหลัง
+                if (screenX + gp.titlesize < 0 || screenX > gp.Widthscreen ||
+                    screenY + gp.titlesize < 0 || screenY > gp.Hightscreen) {
+                    continue; // ออกจากหน้าจอ
+                }
 
-            // วาดเฉพาะที่เห็นบนหน้าจอ
-            if (screenX > -gp.titlesize && screenX < gp.Widthscreen &&
-                screenY > -gp.titlesize && screenY < gp.Hightscreen) {
-                g2.drawImage(tile[tileNum].image, screenX, screenY, gp.titlesize, gp.titlesize, null);
-            }
-
-            worldCol++;
-
-            if(worldCol == gp.maxWorldCol) {
-                worldCol = 0;
-                worldRow++;
+                // ตรวจว่าพื้นที่อยู่นอก map → วาด tile[0] เป็นพื้น
+                if (col < 0 || col >= gp.maxWorldCol || row < 0 || row >= gp.maxWorldRow) {
+                    g2.drawImage(tile[0].image, screenX, screenY, gp.titlesize, gp.titlesize, null);
+                } else {
+                    g2.drawImage(tile[mapTileNum[col][row]].image, screenX, screenY, gp.titlesize, gp.titlesize, null);
+                }
             }
         }
-    }
+        }
 }

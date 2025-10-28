@@ -192,7 +192,7 @@ public class TurnBase {
                     enemyPoisonTurns = Math.min(enemyPoisonTurns + 3, 9); // พิษ 3 เทิร์น สะสมได้
                     usedCard = true;
                 } else if (gp.keyH.wep3 == 1) {
-                    playerShieldTurns = Math.min(playerShieldTurns + 2, 5); // โล่ 2 เทิร์น สะสมได้จำกัด
+                    playerShieldTurns = Math.min(playerShieldTurns + 3, 5); // โล่ 3 เทิร์น สะสมได้จำกัด
                     usedCard = true;
                 } else if (gp.keyH.wep4 == 1) {
                     int before = playerHP;
@@ -325,181 +325,179 @@ public class TurnBase {
     }
 
     public void draw(Graphics2D g2) {
-        int W = gp.getWidth();
-        int H = gp.getHeight();
+    int W = gp.getWidth();
+    int H = gp.getHeight();
 
-        // พื้นหลังสีดำแบบ Pokémon
-        g2.setColor(Color.BLACK);
-        g2.fillRect(0, 0, W, H);
+    // กำหนด font ตามขนาดหน้าจอ
+    int fontSize = Math.max(12, W / 50);
+    g2.setFont(new java.awt.Font("Arial", java.awt.Font.PLAIN, fontSize));
 
-        // แพลตฟอร์มพื้น (วงรีเงาใต้เท้า)
-        g2.setColor(new Color(255, 255, 255, 35));
-        // Enemy platform (ด้านบนขวา)
-        int ePlatW = W / 4; int ePlatH = H / 16;
-        int ePlatX = (int)(W * 0.65);
-        int ePlatY = (int)(H * 0.25);
-        g2.fillOval(ePlatX, ePlatY, ePlatW, ePlatH);
-        // Player platform (ด้านล่างซ้าย)
-        int pPlatW = W / 3; int pPlatH = H / 14;
-        int pPlatX = (int)(W * 0.12);
-        int pPlatY = (int)(H * 0.66);
-        g2.fillOval(pPlatX, pPlatY, pPlatW, pPlatH);
+    // พื้นหลังสีดำ
+    g2.setColor(Color.BLACK);
+    g2.fillRect(0, 0, W, H);
 
-        // ศัตรู (ด้านบนขวา - มองซ้าย) แสดงสไปรต์ของศัตรูจาก explore
-        int enemySize = gp.titlesize * 3;
-        int enemyX = ePlatX + ePlatW/2 - enemySize/2 + gp.titlesize/2;
-        int enemyY = ePlatY - enemySize + gp.titlesize/2;
-        BufferedImage enemySprite = (currentEnemy != null) ? currentEnemy.sprite : null;
-        if (enemySprite != null) {
-            g2.drawImage(enemySprite, enemyX, enemyY, enemySize, enemySize, null);
-        } else {
-            g2.setColor(Color.RED);
-            g2.fillRoundRect(enemyX, enemyY, enemySize, enemySize, 12, 12);
-        }
+    // แพลตฟอร์มพื้น (วงรีเงาใต้เท้า)
+    g2.setColor(new Color(255, 255, 255, 35));
+    // Enemy platform
+    int ePlatW = (int)(W * 0.25);
+    int ePlatH = (int)(H * 0.06);
+    int ePlatX = (int)(W * 0.65);
+    int ePlatY = (int)(H * 0.25);
+    g2.fillOval(ePlatX, ePlatY, ePlatW, ePlatH);
+    // Player platform
+    int pPlatW = (int)(W * 0.33);
+    int pPlatH = (int)(H * 0.07);
+    int pPlatX = (int)(W * 0.12);
+    int pPlatY = (int)(H * 0.66);
+    g2.fillOval(pPlatX, pPlatY, pPlatW, pPlatH);
 
-        // ผู้เล่น (ด้านล่างซ้าย - เห็นด้านหลัง) ใช้สไปรต์ผู้เล่น
-        int playerSize = gp.titlesize * 4;
-        int playerX = pPlatX + pPlatW/2 - playerSize/2 - gp.titlesize/2;
-        int playerY = pPlatY - playerSize + gp.titlesize/2;
-        BufferedImage playerSprite = gp.player1 != null ? gp.player1.up1 : null; // เห็นด้านหลัง
-        if (playerSprite != null) {
-            g2.drawImage(playerSprite, playerX, playerY, playerSize, playerSize, null);
-        } else {
-            g2.setColor(new Color(80, 160, 255));
-            g2.fillRoundRect(playerX, playerY, playerSize, playerSize, 16, 16);
-        }
+    // ศัตรู
+    int enemySize = (int)(W * 0.15); // ปรับตามหน้าจอ
+    int enemyX = ePlatX + ePlatW/2 - enemySize/2;
+    int enemyY = ePlatY - enemySize + ePlatH/2;
+    BufferedImage enemySprite = (currentEnemy != null) ? currentEnemy.sprite : null;
+    if (enemySprite != null) {
+        g2.drawImage(enemySprite, enemyX, enemyY, enemySize, enemySize, null);
+    } else {
+        g2.setColor(Color.RED);
+        g2.fillRoundRect(enemyX, enemyY, enemySize, enemySize, 12, 12);
+    }
 
-        // กล่อง HP (ย้ายวาดตอนท้ายเพื่อไม่ให้ถูก UI อื่นทับ)
-        int boxW = W / 3; int boxH = H / 9;
-        int eBoxX = gp.titlesize; int eBoxY = gp.titlesize;
-        int pBoxW = W / 3; int pBoxH = H / 9;
-        int pBoxX = W - pBoxW - gp.titlesize;
-        int pBoxY = H - pBoxH - gp.titlesize * 2;
+    // ผู้เล่น
+    int playerSize = (int)(W * 0.2);
+    int playerX = pPlatX + pPlatW/2 - playerSize/2;
+    int playerY = pPlatY - playerSize + pPlatH/2;
+    BufferedImage playerSprite = gp.player1 != null ? gp.player1.up1 : null;
+    if (playerSprite != null) {
+        g2.drawImage(playerSprite, playerX, playerY, playerSize, playerSize, null);
+    } else {
+        g2.setColor(new Color(80, 160, 255));
+        g2.fillRoundRect(playerX, playerY, playerSize, playerSize, 16, 16);
+    }
 
-        // เมนูคำสั่งด้านล่างแบบ Pokémon
-        int menuH = H / 4;
+    // เมนูด้านล่าง
+    int menuH = (int)(H * 0.25);
+    g2.setColor(new Color(25, 25, 25));
+    g2.fillRoundRect((int)(W*0.02), H - menuH - (int)(H*0.02), W - (int)(W*0.04), menuH, 12, 12);
+    g2.setColor(Color.WHITE);
+    g2.drawRoundRect((int)(W*0.02), H - menuH - (int)(H*0.02), W - (int)(W*0.04), menuH, 12, 12);
+
+    // ข้อความเมนู
+    int textX = (int)(W * 0.05);
+    int textY = H - menuH - (int)(H*0.02) + fontSize * 2;
+    g2.drawString("What will PLAYER do?", textX, textY);
+    textY += fontSize * 2;
+    g2.setColor(Color.YELLOW);
+    g2.drawString("> ATTACK (SPACE)", textX, textY);
+    g2.setColor(Color.WHITE);
+    g2.drawString("STUN(G)", textX + fontSize * 12, textY);
+    g2.drawString("POISON(H)", textX + fontSize * 18, textY);
+    g2.drawString("SHIELD(L)", textX + fontSize * 25, textY);
+    g2.drawString("HEAL(K)", textX + fontSize * 32, textY);
+    g2.drawString("Magic Dust: " + magicDust, textX + fontSize * 40, textY);
+
+    // Dialog overlay
+    if (battleDialogVisible) {
+        int dW = W - (int)(W*0.04);
+        int dH = fontSize * 4;
+        int dX = (int)(W*0.02);
+        int dY = H - menuH - (int)(H*0.02) - dH - fontSize;
         g2.setColor(new Color(25, 25, 25));
-        g2.fillRoundRect(gp.titlesize, H - menuH - gp.titlesize, W - gp.titlesize * 2, menuH, 12, 12);
+        g2.fillRoundRect(dX, dY, dW, dH, 12, 12);
         g2.setColor(Color.WHITE);
-        g2.drawRoundRect(gp.titlesize, H - menuH - gp.titlesize, W - gp.titlesize * 2, menuH, 12, 12);
+        g2.drawRoundRect(dX, dY, dW, dH, 12, 12);
+        g2.drawString(battleDialogText, dX + fontSize, dY + dH/2 + fontSize/2);
+    }
 
-        // ตัวเลือกพื้นฐาน
-        int textX = gp.titlesize * 2;
-        int textY = H - menuH - gp.titlesize + gp.titlesize * 2;
-        g2.drawString("What will PLAYER do?", textX, textY);
-        textY += gp.titlesize * 2;
-        g2.setColor(Color.YELLOW);
-        g2.drawString("> ATTACK (SPACE)", textX, textY);
+    // Victory / Defeat overlay
+    if (victorySequence || defeatSequence) {
+        String msg = victorySequence ? "BATTLE COMPLETE" : "THE ENEMY WAS TOO STRONG...";
         g2.setColor(Color.WHITE);
-        g2.drawString("STUN(G)", textX + 180, textY);
-        g2.drawString("POISON(H)", textX + 260, textY);
-        g2.drawString("SHIELD(L)", textX + 360, textY);
-        g2.drawString("HEAL(K)", textX + 460, textY);
-        g2.drawString("Magic Dust: " + magicDust, textX + 560, textY);
-
-        // Dialog overlay: End Turn / Enemy Turn (สไตล์ Pokémon)
-        if (battleDialogVisible) {
-            int dW = W - gp.titlesize * 2;
-            int dH = gp.titlesize * 3;
-            int dX = gp.titlesize;
-            int dY = H - menuH - gp.titlesize - dH - gp.titlesize/2;
-            g2.setColor(new Color(25, 25, 25));
-            g2.fillRoundRect(dX, dY, dW, dH, 12, 12);
-            g2.setColor(Color.WHITE);
-            g2.drawRoundRect(dX, dY, dW, dH, 12, 12);
-            g2.drawString(battleDialogText, dX + gp.titlesize, dY + dH/2 + gp.titlesize/4);
+        int msgW = g2.getFontMetrics().stringWidth(msg);
+        g2.drawString(msg, (W - msgW)/2, H/2);
+        if (fadeAlpha > 0) {
+            g2.setColor(new Color(0, 0, 0, Math.min(255, fadeAlpha)));
+            g2.fillRect(0, 0, W, H);
         }
+    }
 
-        // Victory overlay: ข้อความ BATTLE COMPLETE
-        if (victorySequence) {
-            String msg = "BATTLE COMPLETE";
-            g2.setColor(Color.WHITE);
-            int msgW = g2.getFontMetrics().stringWidth(msg);
-            int msgX = (W - msgW) / 2;
-            int msgY = H / 2;
-            g2.drawString(msg, msgX, msgY);
-            // เฟดดำเมื่อเริ่มขั้นตอนเฟด
-            if (fadeAlpha > 0) {
-                g2.setColor(new Color(0, 0, 0, Math.min(255, fadeAlpha)));
-                g2.fillRect(0, 0, W, H);
-            }
-        }
-
-        // Defeat overlay: THE ENEMY WAS TOO STRONG...
-        if (defeatSequence) {
-            String msg = "THE ENEMY WAS TOO STRONG...";
-            g2.setColor(Color.WHITE);
-            int msgW = g2.getFontMetrics().stringWidth(msg);
-            int msgX = (W - msgW) / 2;
-            int msgY = H / 2;
-            g2.drawString(msg, msgX, msgY);
-            if (fadeAlpha > 0) {
-                g2.setColor(new Color(0, 0, 0, Math.min(255, fadeAlpha)));
-                g2.fillRect(0, 0, W, H);
-            }
-        }
-
-        // วาด HP Boxes ด้านบนสุด (หลังสุดเพื่อให้ทับทุกอย่าง)
+        // HP boxes
+        int boxW = (int)(W * 0.3);
+        int boxH = (int)(H * 0.25 / 2);
         // Enemy box
+        int eBoxX = (int)(W*0.02);
+        int eBoxY = (int)(H*0.02);
         g2.setColor(new Color(30, 30, 30));
         g2.fillRoundRect(eBoxX, eBoxY, boxW, boxH, 12, 12);
         g2.setColor(Color.WHITE);
         g2.drawRoundRect(eBoxX, eBoxY, boxW, boxH, 12, 12);
-        g2.drawString("ENEMY", eBoxX + gp.titlesize/2, eBoxY + gp.titlesize);
-        int eHpMaxW = boxW - gp.titlesize * 2;
-        int eHpX = eBoxX + gp.titlesize/2;
-        int eHpY = eBoxY + boxH - gp.titlesize;
+        g2.drawString("ENEMY", eBoxX + fontSize/2, eBoxY + fontSize);
+        int eHpMaxW = boxW - fontSize * 2;
+        int eHpX = eBoxX + fontSize/2;
+        int eHpY = eBoxY + boxH - fontSize;
         g2.setColor(new Color(60, 60, 60));
-        g2.fillRoundRect(eHpX, eHpY, eHpMaxW, gp.titlesize/3 + 2, 8, 8);
+        g2.fillRoundRect(eHpX, eHpY, eHpMaxW, fontSize/2 + 2, 8, 8);
         int eHpW = (int)(eHpMaxW * Math.max(0, Math.min(1.0, enemyHP / (double)Math.max(1, enemyMaxHP))));
         g2.setColor(new Color(255, 80, 80));
-        g2.fillRoundRect(eHpX, eHpY, eHpW, gp.titlesize/3 + 2, 8, 8);
+        g2.fillRoundRect(eHpX, eHpY, eHpW, fontSize/2 + 2, 8, 8);
 
         // Player box
+        int pBoxW = boxW;
+        int pBoxH = boxH;
+        int pBoxX = W - pBoxW - (int)(W*0.02);
+        int pBoxY = H - pBoxH - (int)(H*0.03);
         g2.setColor(new Color(30, 30, 30));
         g2.fillRoundRect(pBoxX, pBoxY, pBoxW, pBoxH, 12, 12);
         g2.setColor(Color.WHITE);
         g2.drawRoundRect(pBoxX, pBoxY, pBoxW, pBoxH, 12, 12);
-        g2.drawString("PLAYER", pBoxX + gp.titlesize/2, pBoxY + gp.titlesize);
-        int pHpMaxW = pBoxW - gp.titlesize * 2;
-        int pHpX = pBoxX + gp.titlesize/2;
-        int pHpY = pBoxY + pBoxH - gp.titlesize;
+        g2.drawString("PLAYER", pBoxX + fontSize/2, pBoxY + fontSize);
+        int pHpMaxW = pBoxW - fontSize * 2;
+        int pHpX = pBoxX + fontSize/2;
+        int pHpY = pBoxY + pBoxH - fontSize;
+
+        // HP bar
         g2.setColor(new Color(60, 60, 60));
-        g2.fillRoundRect(pHpX, pHpY, pHpMaxW, gp.titlesize/3 + 2, 8, 8);
+        g2.fillRoundRect(pHpX, pHpY, pHpMaxW, fontSize/2 + 2, 8, 8);
         int pHpW = (int)(pHpMaxW * Math.max(0, Math.min(1.0, playerHP / 100.0)));
         g2.setColor(new Color(120, 220, 120));
-        g2.fillRoundRect(pHpX, pHpY, pHpW, gp.titlesize/3 + 2, 8, 8);
+        g2.fillRoundRect(pHpX, pHpY, pHpW, fontSize/2 + 2, 8, 8);
         g2.setColor(Color.WHITE);
         String pHpText = playerHP + "/100";
         int pHpTextW = g2.getFontMetrics().stringWidth(pHpText);
-        g2.drawString(pHpText, pBoxX + pBoxW - pHpTextW - gp.titlesize/2, pHpY - gp.titlesize/4);
+        g2.drawString(pHpText, pBoxX + pBoxW - pHpTextW - fontSize/2, pHpY - fontSize/4);
 
-        // Shield bar under player's HP showing remaining shield turns
+        // Shield bar (ปรับให้ห่างจาก HP bar)
         if (playerShieldTurns > 0) {
-            int shieldBarY = pHpY + gp.titlesize/2 + 4;
+            int shieldGap = fontSize; // ระยะห่างจาก HP bar
+            int shieldBarY = pHpY - (fontSize/2 + 8) - shieldGap; // ขยับขึ้นด้านบน
             int shieldMaxTurns = 5;
             int shieldMaxW = pHpMaxW;
             g2.setColor(new Color(80, 80, 40));
-            g2.fillRoundRect(pHpX, shieldBarY, shieldMaxW, gp.titlesize/4 + 2, 8, 8);
+            g2.fillRoundRect(pHpX, shieldBarY, shieldMaxW, fontSize/2, 8, 8);
             int shieldW = (int)(shieldMaxW * Math.max(0, Math.min(1.0, playerShieldTurns / (double)shieldMaxTurns)));
             g2.setColor(new Color(255, 220, 70));
-            g2.fillRoundRect(pHpX, shieldBarY, shieldW, gp.titlesize/4 + 2, 8, 8);
+            g2.fillRoundRect(pHpX, shieldBarY, shieldW, fontSize/2, 8, 8);
+            // เขียนข้อความ Shield พร้อมจำนวน turn ให้ชัด
             g2.setColor(Color.WHITE);
             String shieldText = "Shield: " + playerShieldTurns + "T";
-            g2.drawString(shieldText, pHpX, shieldBarY - 2);
+            int shieldTextW = g2.getFontMetrics().stringWidth(shieldText);
+            g2.drawString(shieldText, pHpX + shieldMaxW - shieldTextW, shieldBarY - fontSize/4);
         }
 
-        // Enemy status texts under enemy HP: STUN/POISON remaining turns
-        int statusY = eHpY + gp.titlesize/2 + 4;
+        // Enemy status texts (STUN/POISON) ปรับไม่ทับกัน
+        int statusY = eHpY + boxH + fontSize/2; // ขยับลงจาก enemy box
         int statusX = eHpX;
         if (enemyStunTurns > 0) {
             g2.setColor(new Color(255, 220, 0));
-            g2.drawString("STUN: " + enemyStunTurns + "T", statusX, statusY);
-            statusX += gp.titlesize * 3;
+            String stunText = "STUN: " + enemyStunTurns + "T";
+            g2.drawString(stunText, statusX, statusY);
+            statusX += g2.getFontMetrics().stringWidth(stunText) + fontSize; // เว้นระยะให้ POISON
         }
         if (enemyPoisonTurns > 0) {
             g2.setColor(new Color(120, 255, 120));
-            g2.drawString("POISON: " + enemyPoisonTurns + "T", statusX, statusY);
+            String poisonText = "POISON: " + enemyPoisonTurns + "T";
+            g2.drawString(poisonText, statusX, statusY);
         }
     }
+
 }

@@ -8,8 +8,8 @@ import javax.swing.JPanel;
 
 public class GamePanle extends JPanel implements Runnable {
     // SCREEN SETTING
-    final int OriginalTitlesize = 16;
-    final int scale = 3;
+    public final int OriginalTitlesize = 16;
+    public final int scale = 3;
     public int titlesize = OriginalTitlesize * scale;
     public final int maxCol = 16;
     public final int maxRow = 12;
@@ -22,16 +22,16 @@ public class GamePanle extends JPanel implements Runnable {
     public final int worldWidth = titlesize * maxWorldCol;
     public final int worldHeight = titlesize * maxWorldRow;
 
-    KeyEventHandler keyH = new KeyEventHandler();
+    public KeyEventHandler keyH = new KeyEventHandler();
     final int FPS = 60;
     Thread gameThread;
 
-    TileManager tileM = new TileManager(this);
-    CollisionChecker cChecker = new CollisionChecker(this);
+    public TileManager tileM = new TileManager(this);
+    public CollisionChecker cChecker = new CollisionChecker(this);
 
     public Player player1 = new Player(this, keyH);
-    Enemy[] enemies = new Enemy[5];
-    TurnBase turnBase = new TurnBase(this);
+    public Enemy[] enemies = new Enemy[5];
+    public TurnBase turnBase = new TurnBase(this);
 
     int currentEnemyIndex = -1;
 
