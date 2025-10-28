@@ -9,7 +9,7 @@ public class BaseGame {
         GamePanle gamePanle = new GamePanle();
         gamePanle.startGameThread();
         window.add(gamePanle);
-        window.setTitle("Dust And Magic");
+        window.setTitle("Dust & Magic");
         window.setLocationRelativeTo(null);
         window.setVisible(true);
     }

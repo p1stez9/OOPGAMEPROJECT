@@ -89,6 +89,10 @@ public class Player extends Entity {
                 break;
             }
         }
+
+        // Clamp ทั่วไปไม่ให้หลุดนอกโลก (ไม่มี margin)
+        worldX = Math.max(0, Math.min(worldX, gp.worldWidth - gp.titlesize));
+        worldY = Math.max(0, Math.min(worldY, gp.worldHeight - gp.titlesize));
     }
 
     public void draw(java.awt.Graphics2D g2){

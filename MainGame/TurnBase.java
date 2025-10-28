@@ -2,12 +2,15 @@ package MainGame;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
 
 public class TurnBase {
     GamePanle gp;
 
     int playerHP = 100;
     int enemyHP = 50;
+    int enemyMaxHP = 50;
+    int enemyAttack = 5;
     int turn = 0; // 0 = Player, 1 = Enemy
     
     // Turn flow helpers
@@ -25,10 +28,45 @@ public class TurnBase {
     // Enemy reference
     Enemy currentEnemy;
 
+    // Victory sequence after killing enemy
+    boolean victorySequence = false;
+    int victoryTimer = 0;
+    final int VICTORY_TEXT_DURATION = 90; // 1.5s
+    int fadeAlpha = 0;
+    final int FADE_SPEED = 10;
+    // Defeat sequence when player dies
+    boolean defeatSequence = false;
+    int defeatTimer = 0;
+    final int DEFEAT_TEXT_DURATION = 90; // 1.5s
+
+    // กำหนดค่าสเตตัสตามสี (1=ฟ้า, 2=เหลือง, 3=ส้ม, 4=แดง)
+    public void initForEnemy(Enemy enemy) {
+        this.currentEnemy = enemy;
+        int v = (enemy != null) ? enemy.getSpriteVariant() : 1;
+        switch (v) {
+            case 1: // ฟ้า - อ่อนสุด
+                enemyMaxHP = 40; enemyAttack = 4; break;
+            case 2: // เหลือง
+                enemyMaxHP = 60; enemyAttack = 6; break;
+            case 3: // ส้ม
+                enemyMaxHP = 80; enemyAttack = 8; break;
+            case 4: // แดง - เก่งสุด
+                enemyMaxHP = 100; enemyAttack = 10; break;
+            default:
+                enemyMaxHP = 50; enemyAttack = 5; break;
+        }
+        enemyHP = enemyMaxHP;
+        // ใช้ค่า HP ผู้เล่นที่คงอยู่ข้ามการต่อสู้
+        if (gp != null) {
+            playerHP = Math.max(0, Math.min(100, gp.persistentPlayerHP));
+        }
+    }
+
     // Card/Magic dust system
     int magicDust = 5; // เริ่มต้น 5
     final int DUST_PER_TURN = 1; // เพิ่มเทิร์นละ 1
     final int CARD_COST = 2; // ใช้การ์ดใบละ 2
+    final int HEAL_AMOUNT = 20; // การ์ดฮีลเพิ่มเลือด
     boolean enemyStunned = false;
     int enemyStunTurns = 0;
     int enemyPoisonTurns = 0; // ศัตรูเสียเลือดปลายตา
@@ -39,6 +77,86 @@ public class TurnBase {
     }
 
     public void update() {
+        // ระหว่างฉากจบเมื่อชนะ: แสดงข้อความและค่อยๆดำก่อนกลับสู่ Explore
+        if (victorySequence) {
+            // แสดงข้อความช่วงแรก
+            if (victoryTimer < VICTORY_TEXT_DURATION) {
+                victoryTimer++;
+                return;
+            }
+            // จากนั้นค่อยๆเฟดดำ
+            if (fadeAlpha < 255) {
+                fadeAlpha = Math.min(255, fadeAlpha + FADE_SPEED);
+                return;
+            }
+            // เฟดเต็มแล้ว กลับสู่โหมด Explore และรีเซ็ตสถานะการต่อสู้
+            gp.state = GamePanle.GameState.EXPLORE;
+            // อัปเดต HP ผู้เล่นให้คงอยู่ข้ามการต่อสู้
+            gp.persistentPlayerHP = playerHP;
+            // รีเซ็ต transition variables
+            gp.transitionAlpha = 0;
+            gp.showDialog = false;
+            gp.dialogTimer = 0;
+            // รีเซ็ตสถานะการต่อสู้ภายใน TurnBase
+            enemyHP = 50;
+            turn = 0;
+            enemyActionTimer = 0;
+            playerPostAttackCooldown = 0;
+            battleDialogVisible = false;
+            battleDialogText = "";
+            battleDialogTimer = 0;
+            battleDialogStage = -1;
+            enemyStunned = false;
+            enemyStunTurns = 0;
+            enemyPoisonTurns = 0;
+            playerShieldTurns = 0;
+            gp.currentEnemyIndex = -1;
+            currentEnemy = null;
+            // รีเซ็ตตัวแปรฉากชัยชนะ
+            victorySequence = false;
+            victoryTimer = 0;
+            fadeAlpha = 0;
+            System.out.println("การต่อสู้จบแล้ว! กลับไป Explore mode");
+            return;
+        }
+
+        // ระหว่างฉากพ่ายแพ้: แสดงข้อความแล้วค่อยๆดำก่อนกลับ Title
+        if (defeatSequence) {
+            if (defeatTimer < DEFEAT_TEXT_DURATION) {
+                defeatTimer++;
+                return;
+            }
+            if (fadeAlpha < 255) {
+                fadeAlpha = Math.min(255, fadeAlpha + FADE_SPEED);
+                return;
+            }
+            // ไปหน้า Title และรีเซ็ตการต่อสู้
+            gp.state = GamePanle.GameState.TITLE;
+            gp.persistentPlayerHP = 100; // เริ่มใหม่ที่ Title
+            gp.transitionAlpha = 0;
+            gp.showDialog = false;
+            gp.dialogTimer = 0;
+            enemyHP = 50;
+            turn = 0;
+            enemyActionTimer = 0;
+            playerPostAttackCooldown = 0;
+            battleDialogVisible = false;
+            battleDialogText = "";
+            battleDialogTimer = 0;
+            battleDialogStage = -1;
+            enemyStunned = false;
+            enemyStunTurns = 0;
+            enemyPoisonTurns = 0;
+            playerShieldTurns = 0;
+            gp.currentEnemyIndex = -1;
+            currentEnemy = null;
+            defeatSequence = false;
+            defeatTimer = 0;
+            fadeAlpha = 0;
+            System.out.println("ผู้เล่นพ่ายแพ้ กลับไปหน้า Title");
+            return;
+        }
+
         if (turn == 0) {
             // จัดการ dialog ฝั่งผู้เล่น (เคสกลับจากศัตรูโจมตี: End Turn -> Player Turn)
             if (battleDialogVisible) {
@@ -63,7 +181,7 @@ public class TurnBase {
             if (playerPostAttackCooldown > 0) {
                 playerPostAttackCooldown--;
             }
-            // ใช้การ์ด: 1=STUN, 2=POISON, 3=SHIELD (หักค่า Magic Dust)
+            // ใช้การ์ด: 1=STUN, 2=POISON, 3=SHIELD, 4=HEAL (หักค่า Magic Dust)
             boolean usedCard = false;
             if (magicDust >= CARD_COST) {
                 if (gp.keyH.wep1 == 1) { // ใช้ปุ่มเดิมเป็นทางลัด card1
@@ -76,6 +194,11 @@ public class TurnBase {
                 } else if (gp.keyH.wep3 == 1) {
                     playerShieldTurns = Math.min(playerShieldTurns + 2, 5); // โล่ 2 เทิร์น สะสมได้จำกัด
                     usedCard = true;
+                } else if (gp.keyH.wep4 == 1) {
+                    int before = playerHP;
+                    playerHP = Math.min(100, playerHP + HEAL_AMOUNT);
+                    System.out.println("HEAL card used! Player HP: " + before + " -> " + playerHP);
+                    usedCard = true;
                 }
             } 
             if (usedCard) {
@@ -87,7 +210,7 @@ public class TurnBase {
                 battleDialogStage = 0;
                 turn = 1;
                 enemyActionTimer = 0;
-                gp.keyH.wep1 = gp.keyH.wep2 = gp.keyH.wep3 = 0;
+                gp.keyH.wep1 = gp.keyH.wep2 = gp.keyH.wep3 = gp.keyH.wep4 = 0;
                 return;
             }
 
@@ -139,7 +262,7 @@ public class TurnBase {
                         return;
                     }
 
-                    int damage = 5;
+                    int damage = enemyAttack;
                     if (playerShieldTurns > 0) {
                         damage = Math.max(1, damage - 3); // โล่ลดความเสียหาย 3
                         playerShieldTurns--;
@@ -170,45 +293,34 @@ public class TurnBase {
 
         // ตรวจสอบว่าใครแพ้
         if (playerHP <= 0 || enemyHP <= 0) {
-            // บันทึกผลการต่อสู้ก่อนรีเซ็ตค่า HP
             boolean enemyKilled = enemyHP <= 0;
-
-            // ออกจากโหมด Battle กลับไป Explore ทันที
-            gp.state = GamePanle.GameState.EXPLORE;
-
-            // ถ้า enemy ตาย ให้ฆ่า enemy ก่อนรีเซ็ตค่า
-            if (enemyKilled && currentEnemy != null) {
-                System.out.println("กำลังฆ่า Enemy - isDead: " + currentEnemy.isDead);
-                currentEnemy.isDead = true;
-                System.out.println("Enemy ถูกฆ่าแล้ว! isDead: " + currentEnemy.isDead);
+            if (enemyKilled) {
+                // กำจัดศัตรู แล้วเริ่มฉากชัยชนะ
+                if (currentEnemy != null) {
+                    System.out.println("กำลังฆ่า Enemy - isDead: " + currentEnemy.isDead);
+                    currentEnemy.isDead = true;
+                    System.out.println("Enemy ถูกฆ่าแล้ว! isDead: " + currentEnemy.isDead);
+                }
+                // เริ่มลำดับฉากชัยชนะ
+                victorySequence = true;
+                victoryTimer = 0;
+                fadeAlpha = 0;
+                battleDialogVisible = false;
+                battleDialogText = "";
+                battleDialogTimer = 0;
+                battleDialogStage = -1;
+                return;
+            } else {
+                // เริ่มลำดับฉากพ่ายแพ้
+                defeatSequence = true;
+                defeatTimer = 0;
+                fadeAlpha = 0;
+                battleDialogVisible = false;
+                battleDialogText = "";
+                battleDialogTimer = 0;
+                battleDialogStage = -1;
+                return;
             }
-
-            // รีเซ็ต transition variables
-            gp.transitionAlpha = 0;
-            gp.showDialog = false;
-            gp.dialogTimer = 0;
-
-            // รีเซ็ต HP กลับเป็นค่าเริ่มต้น
-            playerHP = 100;
-            enemyHP = 50;
-            turn = 0;
-            enemyActionTimer = 0;
-            playerPostAttackCooldown = 0;
-
-            // รีเซ็ต dialog และ currentEnemy
-            battleDialogVisible = false;
-            battleDialogText = "";
-            battleDialogTimer = 0;
-            battleDialogStage = -1;
-            enemyStunned = false;
-            enemyStunTurns = 0;
-            enemyPoisonTurns = 0;
-            playerShieldTurns = 0;
-            // รีเซ็ต currentEnemyIndex และ currentEnemy
-            gp.currentEnemyIndex = -1;
-            currentEnemy = null;
-
-            System.out.println("การต่อสู้จบแล้ว! กลับไป Explore mode");
         }
     }
 
@@ -233,19 +345,29 @@ public class TurnBase {
         int pPlatY = (int)(H * 0.66);
         g2.fillOval(pPlatX, pPlatY, pPlatW, pPlatH);
 
-        // ศัตรู (ด้านบนขวา - มองซ้าย) ใช้สี่เหลี่ยมเป็น placeholder sprite
+        // ศัตรู (ด้านบนขวา - มองซ้าย) แสดงสไปรต์ของศัตรูจาก explore
         int enemySize = gp.titlesize * 3;
         int enemyX = ePlatX + ePlatW/2 - enemySize/2 + gp.titlesize/2;
         int enemyY = ePlatY - enemySize + gp.titlesize/2;
-        g2.setColor(Color.RED);
-        g2.fillRoundRect(enemyX, enemyY, enemySize, enemySize, 12, 12);
+        BufferedImage enemySprite = (currentEnemy != null) ? currentEnemy.sprite : null;
+        if (enemySprite != null) {
+            g2.drawImage(enemySprite, enemyX, enemyY, enemySize, enemySize, null);
+        } else {
+            g2.setColor(Color.RED);
+            g2.fillRoundRect(enemyX, enemyY, enemySize, enemySize, 12, 12);
+        }
 
-        // ผู้เล่น (ด้านล่างซ้าย - เห็นด้านหลัง) ใช้สี่เหลี่ยมเป็น placeholder sprite
+        // ผู้เล่น (ด้านล่างซ้าย - เห็นด้านหลัง) ใช้สไปรต์ผู้เล่น
         int playerSize = gp.titlesize * 4;
         int playerX = pPlatX + pPlatW/2 - playerSize/2 - gp.titlesize/2;
         int playerY = pPlatY - playerSize + gp.titlesize/2;
-        g2.setColor(new Color(80, 160, 255));
-        g2.fillRoundRect(playerX, playerY, playerSize, playerSize, 16, 16);
+        BufferedImage playerSprite = gp.player1 != null ? gp.player1.up1 : null; // เห็นด้านหลัง
+        if (playerSprite != null) {
+            g2.drawImage(playerSprite, playerX, playerY, playerSize, playerSize, null);
+        } else {
+            g2.setColor(new Color(80, 160, 255));
+            g2.fillRoundRect(playerX, playerY, playerSize, playerSize, 16, 16);
+        }
 
         // กล่อง HP (ย้ายวาดตอนท้ายเพื่อไม่ให้ถูก UI อื่นทับ)
         int boxW = W / 3; int boxH = H / 9;
@@ -272,7 +394,8 @@ public class TurnBase {
         g2.drawString("STUN(G)", textX + 180, textY);
         g2.drawString("POISON(H)", textX + 260, textY);
         g2.drawString("SHIELD(L)", textX + 360, textY);
-        g2.drawString("Magic Dust: " + magicDust, textX + 480, textY);
+        g2.drawString("HEAL(K)", textX + 460, textY);
+        g2.drawString("Magic Dust: " + magicDust, textX + 560, textY);
 
         // Dialog overlay: End Turn / Enemy Turn (สไตล์ Pokémon)
         if (battleDialogVisible) {
@@ -287,6 +410,35 @@ public class TurnBase {
             g2.drawString(battleDialogText, dX + gp.titlesize, dY + dH/2 + gp.titlesize/4);
         }
 
+        // Victory overlay: ข้อความ BATTLE COMPLETE
+        if (victorySequence) {
+            String msg = "BATTLE COMPLETE";
+            g2.setColor(Color.WHITE);
+            int msgW = g2.getFontMetrics().stringWidth(msg);
+            int msgX = (W - msgW) / 2;
+            int msgY = H / 2;
+            g2.drawString(msg, msgX, msgY);
+            // เฟดดำเมื่อเริ่มขั้นตอนเฟด
+            if (fadeAlpha > 0) {
+                g2.setColor(new Color(0, 0, 0, Math.min(255, fadeAlpha)));
+                g2.fillRect(0, 0, W, H);
+            }
+        }
+
+        // Defeat overlay: THE ENEMY WAS TOO STRONG...
+        if (defeatSequence) {
+            String msg = "THE ENEMY WAS TOO STRONG...";
+            g2.setColor(Color.WHITE);
+            int msgW = g2.getFontMetrics().stringWidth(msg);
+            int msgX = (W - msgW) / 2;
+            int msgY = H / 2;
+            g2.drawString(msg, msgX, msgY);
+            if (fadeAlpha > 0) {
+                g2.setColor(new Color(0, 0, 0, Math.min(255, fadeAlpha)));
+                g2.fillRect(0, 0, W, H);
+            }
+        }
+
         // วาด HP Boxes ด้านบนสุด (หลังสุดเพื่อให้ทับทุกอย่าง)
         // Enemy box
         g2.setColor(new Color(30, 30, 30));
@@ -299,7 +451,7 @@ public class TurnBase {
         int eHpY = eBoxY + boxH - gp.titlesize;
         g2.setColor(new Color(60, 60, 60));
         g2.fillRoundRect(eHpX, eHpY, eHpMaxW, gp.titlesize/3 + 2, 8, 8);
-        int eHpW = (int)(eHpMaxW * Math.max(0, Math.min(1.0, enemyHP / 50.0)));
+        int eHpW = (int)(eHpMaxW * Math.max(0, Math.min(1.0, enemyHP / (double)Math.max(1, enemyMaxHP))));
         g2.setColor(new Color(255, 80, 80));
         g2.fillRoundRect(eHpX, eHpY, eHpW, gp.titlesize/3 + 2, 8, 8);
 

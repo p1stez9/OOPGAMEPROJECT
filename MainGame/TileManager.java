@@ -30,7 +30,6 @@ public class TileManager{
 
             tile[1] = new Tile();
             tile[1].image = ImageIO.read(getClass().getResource("result_stone.jpg"));
-            tile[1].collision = true;
 
             tile[2] = new Tile();
             tile[2].image = ImageIO.read(getClass().getResource("result_water.jpg"));
@@ -86,16 +85,27 @@ public class TileManager{
         int worldCol = 0;
         int worldRow = 0;
         
+        // คำนวณกล้องโดยยึดตามผู้เล่นและ clamp ไม่ให้ออกนอกโลก
+        int camX = gp.player1.worldX - gp.player1.screenX;
+        int camY = gp.player1.worldY - gp.player1.screenY;
+        camX = Math.max(0, Math.min(camX, gp.worldWidth - gp.Widthscreen));
+        camY = Math.max(0, Math.min(camY, gp.worldHeight - gp.Hightscreen));
+
         while(worldRow < gp.maxWorldRow && worldCol < gp.maxWorldCol) {
 
             int tileNum = mapTileNum[worldCol][worldRow];
 
             int worldX = worldCol * gp.titlesize;
             int worldY = worldRow * gp.titlesize;
-            int screenX = worldX - gp.player1.worldX + gp.player1.screenX;
-            int screenY = worldY - gp.player1.worldY + gp.player1.screenY;
+            int screenX = worldX - camX;
+            int screenY = worldY - camY;
 
-            g2.drawImage(tile[tileNum].image, screenX, screenY, gp.titlesize, gp.titlesize, null);
+            // วาดเฉพาะที่เห็นบนหน้าจอ
+            if (screenX > -gp.titlesize && screenX < gp.Widthscreen &&
+                screenY > -gp.titlesize && screenY < gp.Hightscreen) {
+                g2.drawImage(tile[tileNum].image, screenX, screenY, gp.titlesize, gp.titlesize, null);
+            }
+
             worldCol++;
 
             if(worldCol == gp.maxWorldCol) {

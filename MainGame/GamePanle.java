@@ -35,10 +35,13 @@ public class GamePanle extends JPanel implements Runnable {
 
     int currentEnemyIndex = -1;
 
+    // ค่าพลังชีวิตผู้เล่นคงอยู่ข้ามการต่อสู้
+    public int persistentPlayerHP = 100;
+
     enum GameState {
-        EXPLORE, BATTLE, TRANSITION
+        TITLE, EXPLORE, BATTLE, TRANSITION
     }
-    GameState state = GameState.EXPLORE;
+    GameState state = GameState.TITLE;
 
     // Transition variables
     int transitionAlpha = 0;
@@ -59,11 +62,12 @@ public class GamePanle extends JPanel implements Runnable {
         setFocusable(true);
         setFocusTraversalKeysEnabled(false);
 
-        // สร้าง enemies
+        // สร้าง enemies และกำหนดสกินจากไฟล์ pixil-enemy-1..4.png สลับไปเรื่อยๆ
         for (int i = 0; i < enemies.length; i++) {
             enemies[i] = new Enemy(this);
             enemies[i].worldX = titlesize * (25 + i * 5);
             enemies[i].worldY = titlesize * (25 + i * 3);
+            enemies[i].setSpriteVariant((i % 4) + 1);
         }
     }
 
@@ -100,6 +104,16 @@ public class GamePanle extends JPanel implements Runnable {
         }
 
         if (menuState) return;
+
+        // TITLE screen: รอให้ผู้เล่นกดเริ่มเกม
+        if (state == GameState.TITLE) {
+            if (keyH.enterPressed == 1 || keyH.spacePressed == 1) {
+                state = GameState.EXPLORE;
+                keyH.enterPressed = 0;
+                keyH.spacePressed = 0;
+            }
+            return;
+        }
 
         if (state == GameState.EXPLORE) {
             player1.update();
@@ -139,7 +153,7 @@ public class GamePanle extends JPanel implements Runnable {
             if (showDialog) {
                 dialogTimer++;
                 if (dialogTimer >= DIALOG_DURATION) {
-                    turnBase.currentEnemy = enemies[currentEnemyIndex];
+                    turnBase.initForEnemy(enemies[currentEnemyIndex]);
                     System.out.println("ตั้งค่า currentEnemy: " + (currentEnemyIndex + 1) + " - isDead: " + enemies[currentEnemyIndex].isDead);
                     // Reset TurnBase turn/dialog to ensure input works
                     turnBase.battleDialogVisible = false;
@@ -162,6 +176,29 @@ public class GamePanle extends JPanel implements Runnable {
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
         Graphics2D g2 = (Graphics2D) g;
+
+        if (state == GameState.TITLE) {
+            // วาดหน้า Title
+            g2.setColor(Color.BLACK);
+            g2.fillRect(0, 0, getWidth(), getHeight());
+            // ชื่อเกมใหญ่
+            String title = "Dust & Magic";
+            g2.setColor(Color.WHITE);
+            g2.setFont(g2.getFont().deriveFont(48f));
+            int tW = g2.getFontMetrics().stringWidth(title);
+            int tX = (getWidth() - tW) / 2;
+            int tY = getHeight() / 3;
+            g2.drawString(title, tX, tY);
+            // ปุ่มเริ่ม
+            String prompt = "PRESS ENTER TO START";
+            g2.setFont(g2.getFont().deriveFont(20f));
+            int pW = g2.getFontMetrics().stringWidth(prompt);
+            int pX = (getWidth() - pW) / 2;
+            int pY = tY + 80;
+            g2.drawString(prompt, pX, pY);
+            g2.dispose();
+            return;
+        }
 
         if (state == GameState.EXPLORE) {
             tileM.draw(g2);

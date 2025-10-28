@@ -12,6 +12,7 @@ public class KeyEventHandler implements KeyListener{
     public int wep1 = 0;
     public int wep2 = 0;
     public int wep3 = 0;
+    public int wep4 = 0;
     public int tabPressed = 0;
     public int enterPressed = 0;
     public int attackPressed = 0;
@@ -47,7 +48,7 @@ public class KeyEventHandler implements KeyListener{
             attackPressed = 1;
         }
 
-        // Card hotkeys: G/H/L
+        // Card hotkeys: G/H/L/K
         if(ASCII == KeyEvent.VK_G){
             wep1 = 1; // STUN
         }
@@ -56,6 +57,9 @@ public class KeyEventHandler implements KeyListener{
         }
         if(ASCII == KeyEvent.VK_L){
             wep3 = 1; // SHIELD
+        }
+        if(ASCII == KeyEvent.VK_K){
+            wep4 = 1; // HEAL
         }
 
         if (ASCII == KeyEvent.VK_P)   tabPressed = 1;    // ← เพิ่ม
@@ -93,6 +97,9 @@ public class KeyEventHandler implements KeyListener{
         }
         if(ASCII == KeyEvent.VK_L){
             wep3 = 0;
+        }
+        if(ASCII == KeyEvent.VK_K){
+            wep4 = 0;
         }
         if (ASCII == KeyEvent.VK_P)   tabPressed = 0;     // ← เพิ่ม
         if (ASCII == KeyEvent.VK_ENTER) enterPressed = 0;   // ← เพิ่ม
