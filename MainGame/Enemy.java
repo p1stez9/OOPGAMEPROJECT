@@ -66,19 +66,53 @@ public class Enemy {
         
         int r = gp.titlesize;
         
-        // เคลื่อนที่ตามทิศทางที่สุ่ม
+        // เคลื่อนที่ตามทิศทางที่สุ่ม (พร้อมตรวจสอบ collision)
         switch (direction) {
             case 0: // up
-                if (worldY - speed >= 0) worldY -= speed;
+                if (worldY - speed >= 0) {
+                    int newY = worldY - speed;
+                    // ตรวจสอบ collision ที่ tile ที่จะไป
+                    if (gp.canMoveTo(worldX, newY)) {
+                        worldY = newY;
+                    } else {
+                        // ชน collision ให้เปลี่ยนทิศทาง
+                        direction = random.nextInt(4);
+                        moveTimer = 0;
+                    }
+                }
                 break;
             case 1: // down
-                if (worldY + speed <= gp.worldHeight - r) worldY += speed;
+                if (worldY + speed <= gp.worldHeight - r) {
+                    int newY = worldY + speed;
+                    if (gp.canMoveTo(worldX, newY)) {
+                        worldY = newY;
+                    } else {
+                        direction = random.nextInt(4);
+                        moveTimer = 0;
+                    }
+                }
                 break;
             case 2: // left
-                if (worldX - speed >= 0) worldX -= speed;
+                if (worldX - speed >= 0) {
+                    int newX = worldX - speed;
+                    if (gp.canMoveTo(newX, worldY)) {
+                        worldX = newX;
+                    } else {
+                        direction = random.nextInt(4);
+                        moveTimer = 0;
+                    }
+                }
                 break;
             case 3: // right
-                if (worldX + speed <= gp.worldWidth - r) worldX += speed;
+                if (worldX + speed <= gp.worldWidth - r) {
+                    int newX = worldX + speed;
+                    if (gp.canMoveTo(newX, worldY)) {
+                        worldX = newX;
+                    } else {
+                        direction = random.nextInt(4);
+                        moveTimer = 0;
+                    }
+                }
                 break;
         }
         

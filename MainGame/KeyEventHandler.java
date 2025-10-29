@@ -16,6 +16,7 @@ public class KeyEventHandler implements KeyListener{
     public int tabPressed = 0;
     public int enterPressed = 0;
     public int attackPressed = 0;
+    public int escPressed = 0;
 
 
     
@@ -64,6 +65,7 @@ public class KeyEventHandler implements KeyListener{
 
         if (ASCII == KeyEvent.VK_P)   tabPressed = 1;    // ← เพิ่ม
         if (ASCII == KeyEvent.VK_ENTER) enterPressed = 1;  // ← เพิ่ม
+        if (ASCII == KeyEvent.VK_ESCAPE) escPressed = 1;  // ESC key for pause
     }
 
     @Override
@@ -103,6 +105,7 @@ public class KeyEventHandler implements KeyListener{
         }
         if (ASCII == KeyEvent.VK_P)   tabPressed = 0;     // ← เพิ่ม
         if (ASCII == KeyEvent.VK_ENTER) enterPressed = 0;   // ← เพิ่ม
+        if (ASCII == KeyEvent.VK_ESCAPE) escPressed = 0;   // ESC key for pause
         
     }
 }

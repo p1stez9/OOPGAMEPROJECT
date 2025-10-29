@@ -35,11 +35,11 @@ public class GamePanle extends JPanel implements Runnable {
 
     int currentEnemyIndex = -1;
 
-    // ค่าพลังชีวิตผู้เล่นคงอยู่ข้ามการต่อสู้
+    // Hp player หลังสู็ก็ยังอยู่เท่าเดิม
     public int persistentPlayerHP = 100;
 
     enum GameState {
-        TITLE, EXPLORE, BATTLE, TRANSITION
+        TITLE, EXPLORE, BATTLE, TRANSITION, VICTORY, PAUSED
     }
     GameState state = GameState.TITLE;
 
@@ -54,6 +54,62 @@ public class GamePanle extends JPanel implements Runnable {
     String[] menutext = { "item1", "item2" };
     int indexitem = 0;
 
+    // Pause variables
+    GameState previousState;
+
+    // Victory screen variables
+    int victoryAlpha = 0;
+    int victoryTimer = 0;
+    final int VICTORY_FADE_SPEED = 8;
+    final int VICTORY_DISPLAY_DURATION = 240; // 4 seconds at 60 FPS
+
+    // check collision
+    public boolean isValidPosition(int worldX, int worldY) {
+        if (worldX < 0 || worldY < 0 || 
+            worldX >= worldWidth || worldY >= worldHeight) {
+            return false;
+        }
+
+        int col = worldX / titlesize;
+        int row = worldY / titlesize;
+
+        if (col < 0 || col >= maxWorldCol || row < 0 || row >= maxWorldRow) {
+            return false;
+        }
+
+        int tileNum = tileM.mapTileNum[col][row];
+        return !tileM.tile[tileNum].collision;
+    }
+
+    // Check position enemy ว่าขยับได้มั้ย
+    public boolean canMoveTo(int worldX, int worldY) {
+        return isValidPosition(worldX, worldY);
+    }
+
+    // Find a random valid position for enemy
+    private int[] findRandomValidPosition() {
+        int attempts = 0;
+        int maxAttempts = 100;
+        
+        while (attempts < maxAttempts) {
+            int worldX = (int)(Math.random() * worldWidth);
+            int worldY = (int)(Math.random() * worldHeight);
+            
+            if (isValidPosition(worldX, worldY)) {
+                // Round to tile position
+                int col = worldX / titlesize;
+                int row = worldY / titlesize;
+                int tileX = col * titlesize;
+                int tileY = row * titlesize;
+                
+                return new int[]{tileX, tileY};
+            }
+            attempts++;
+        }
+        
+        return new int[]{titlesize * 25, titlesize * 25};
+    }
+
     public GamePanle() {
         setPreferredSize(new Dimension(Widthscreen, Hightscreen));
         setBackground(Color.black);
@@ -62,13 +118,44 @@ public class GamePanle extends JPanel implements Runnable {
         setFocusable(true);
         setFocusTraversalKeysEnabled(false);
 
-        // สร้าง enemies และกำหนดสกินจากไฟล์ pixil-enemy-1..4.png สลับไปเรื่อยๆ
+        // สร้าง enemy
         for (int i = 0; i < enemies.length; i++) {
             enemies[i] = new Enemy(this);
-            enemies[i].worldX = titlesize * (25 + i * 5);
-            enemies[i].worldY = titlesize * (25 + i * 3);
+            
+            // สุ่มเกิด
+            int[] pos = findRandomValidPosition();
+            enemies[i].worldX = pos[0];
+            enemies[i].worldY = pos[1];
+            
             enemies[i].setSpriteVariant((i % 4) + 1);
         }
+    }
+
+    public void resetGame() {
+        // enemy reset
+        for (int i = 0; i < enemies.length; i++) {
+            enemies[i] = new Enemy(this);
+            
+            int[] pos = findRandomValidPosition();
+            enemies[i].worldX = pos[0];
+            enemies[i].worldY = pos[1];
+            
+            enemies[i].setSpriteVariant((i % 4) + 1);
+            enemies[i].isDead = false;
+        }
+
+        // player reset
+        player1.setDefaultValues();
+        persistentPlayerHP = 100;
+
+        // game reset
+        state = GameState.TITLE;
+        currentEnemyIndex = -1;
+        victoryAlpha = 0;
+        victoryTimer = 0;
+        transitionAlpha = 0;
+        showDialog = false;
+        dialogTimer = 0;
     }
 
     public void startGameThread() {
@@ -98,6 +185,41 @@ public class GamePanle extends JPanel implements Runnable {
     }
 
     public void update() {
+        // pause
+        if (state == GameState.PAUSED) {
+            if (keyH.escPressed == 1) {
+                state = previousState;
+                keyH.escPressed = 0;
+            }
+            return;
+        }
+
+        // victory
+        if (state == GameState.VICTORY) {
+            victoryTimer++;
+            if (victoryAlpha < 255 && victoryTimer > 60) {
+                victoryAlpha = Math.min(255, victoryAlpha + VICTORY_FADE_SPEED);
+            }
+            if (victoryTimer >= VICTORY_DISPLAY_DURATION) {
+                if (keyH.enterPressed == 1 || keyH.spacePressed == 1) {
+                    // เวลาชนะมันจะกลับไปหน้า title
+                    state = GameState.TITLE;
+                    keyH.enterPressed = 0;
+                    keyH.spacePressed = 0;
+                    resetGame();
+                }
+            }
+            return;
+        }
+
+        // pause key
+        if (keyH.escPressed == 1 && (state == GameState.EXPLORE || state == GameState.BATTLE)) {
+            previousState = state;
+            state = GameState.PAUSED;
+            keyH.escPressed = 0;
+            return;
+        }
+
         if (keyH.tabPressed == 1) {
             menuState = !menuState;
             keyH.tabPressed = 0;
@@ -105,7 +227,7 @@ public class GamePanle extends JPanel implements Runnable {
 
         if (menuState) return;
 
-        // TITLE screen: รอให้ผู้เล่นกดเริ่มเกม
+        // title screen
         if (state == GameState.TITLE) {
             if (keyH.enterPressed == 1 || keyH.spacePressed == 1) {
                 state = GameState.EXPLORE;
@@ -117,13 +239,26 @@ public class GamePanle extends JPanel implements Runnable {
 
         if (state == GameState.EXPLORE) {
             player1.update();
+            
+            // เช็คว่าตายหมดมั้ย
+            boolean allEnemiesDead = true;
             for (Enemy enemy : enemies) {
                 if (!enemy.isDead) {
+                    allEnemiesDead = false;
                     enemy.update();
                 }
             }
 
-            // ตรวจจับชนกับศัตรู
+            // ถ้าตายหมดก็จะ victory
+            if (allEnemiesDead && enemies.length > 0) {
+                state = GameState.VICTORY;
+                victoryAlpha = 0;
+                victoryTimer = 0;
+                System.out.println("Victory! All enemies defeated!");
+                return;
+            }
+
+            // เช็คว่า player ชน enemy มั้ย
             for (int i = 0; i < enemies.length; i++) {
                 Enemy e = enemies[i];
                 if (!e.isDead &&
@@ -155,7 +290,6 @@ public class GamePanle extends JPanel implements Runnable {
                 if (dialogTimer >= DIALOG_DURATION) {
                     turnBase.initForEnemy(enemies[currentEnemyIndex]);
                     System.out.println("ตั้งค่า currentEnemy: " + (currentEnemyIndex + 1) + " - isDead: " + enemies[currentEnemyIndex].isDead);
-                    // Reset TurnBase turn/dialog to ensure input works
                     turnBase.battleDialogVisible = false;
                     turnBase.battleDialogText = "";
                     turnBase.battleDialogTimer = 0;
@@ -241,6 +375,82 @@ public class GamePanle extends JPanel implements Runnable {
             }
         } else if (state == GameState.BATTLE) {
             turnBase.draw(g2);
+        } else if (state == GameState.VICTORY) {
+            // Victory screen background
+            g2.setColor(Color.BLACK);
+            g2.fillRect(0, 0, getWidth(), getHeight());
+
+            // Victory message
+            String victoryText = "VICTORY!";
+            String subText = "All Enemies Defeated";
+            g2.setColor(new Color(255, 215, 0)); // Gold color
+            g2.setFont(g2.getFont().deriveFont(64f));
+            int vW = g2.getFontMetrics().stringWidth(victoryText);
+            int vX = (getWidth() - vW) / 2;
+            int vY = getHeight() / 2 - 40;
+            g2.drawString(victoryText, vX, vY);
+
+            g2.setColor(Color.WHITE);
+            g2.setFont(g2.getFont().deriveFont(24f));
+            int sW = g2.getFontMetrics().stringWidth(subText);
+            int sX = (getWidth() - sW) / 2;
+            int sY = vY + 60;
+            g2.drawString(subText, sX, sY);
+
+            // Prompt to continue
+            if (victoryTimer >= VICTORY_DISPLAY_DURATION) {
+                String prompt = "Press ENTER to return to title";
+                g2.setFont(g2.getFont().deriveFont(20f));
+                int pW = g2.getFontMetrics().stringWidth(prompt);
+                int pX = (getWidth() - pW) / 2;
+                int pY = sY + 60;
+                g2.setColor(Color.LIGHT_GRAY);
+                g2.drawString(prompt, pX, pY);
+            }
+
+            // Fade overlay
+            if (victoryAlpha > 0) {
+                g2.setColor(new Color(0, 0, 0, Math.min(255, victoryAlpha)));
+                g2.fillRect(0, 0, getWidth(), getHeight());
+            }
+        } else if (state == GameState.PAUSED) {
+            // Draw the previous state in the background
+            if (previousState == GameState.EXPLORE) {
+                tileM.draw(g2);
+                player1.draw(g2);
+                for (Enemy enemy : enemies) {
+                    if (!enemy.isDead) enemy.draw(g2);
+                }
+            } else if (previousState == GameState.BATTLE) {
+                turnBase.draw(g2);
+            }
+
+            // Semi-transparent overlay
+            g2.setColor(new Color(0, 0, 0, 180));
+            g2.fillRect(0, 0, getWidth(), getHeight());
+
+            // Pause text
+            String pauseText = "PAUSED";
+            g2.setColor(Color.WHITE);
+            g2.setFont(g2.getFont().deriveFont(48f));
+            int pW = g2.getFontMetrics().stringWidth(pauseText);
+            int pX = (getWidth() - pW) / 2;
+            int pY = getHeight() / 2;
+
+            // Shadow effect
+            g2.setColor(new Color(0, 0, 0, 150));
+            g2.drawString(pauseText, pX + 3, pY + 3);
+            g2.setColor(Color.WHITE);
+            g2.drawString(pauseText, pX, pY);
+
+            // Instruction
+            String instruction = "Press ESC to resume";
+            g2.setFont(g2.getFont().deriveFont(18f));
+            int iW = g2.getFontMetrics().stringWidth(instruction);
+            int iX = (getWidth() - iW) / 2;
+            int iY = pY + 50;
+            g2.setColor(Color.LIGHT_GRAY);
+            g2.drawString(instruction, iX, iY);
         }
 
         if (menuState) {
