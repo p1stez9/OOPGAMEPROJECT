@@ -111,6 +111,15 @@ public class TileManager{
         int camX = gp.player1.worldX - gp.player1.screenX;
         int camY = gp.player1.worldY - gp.player1.screenY;
 
+        // int maxCamX = gp.maxWorldCol * gp.titlesize - gp.Widthscreen;
+        // int maxCamY = gp.maxWorldRow * gp.titlesize - gp.Hightscreen;
+
+        // if (camX < 0) camX = 0;
+        // if (camY < 0) camY = 0;
+        // if (camX > maxCamX) camX = maxCamX;
+        // if (camY > maxCamY) camY = maxCamY;
+
+
         for (int row = 0; row < gp.maxWorldRow; row++) {
             for (int col = 0; col < gp.maxWorldCol; col++) {
 
@@ -125,12 +134,7 @@ public class TileManager{
                     continue; // ออกจากหน้าจอ
                 }
 
-                // ตรวจว่าพื้นที่อยู่นอก map → วาด tile[0] เป็นพื้น
-                if (col < 0 || col >= gp.maxWorldCol || row < 0 || row >= gp.maxWorldRow) {
-                    g2.drawImage(tile[0].image, screenX, screenY, gp.titlesize, gp.titlesize, null);
-                } else {
-                    g2.drawImage(tile[mapTileNum[col][row]].image, screenX, screenY, gp.titlesize, gp.titlesize, null);
-                }
+                g2.drawImage(tile[mapTileNum[col][row]].image, screenX, screenY, gp.titlesize, gp.titlesize, null);
             }
         }
         }

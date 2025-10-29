@@ -86,7 +86,6 @@ public class GamePanle extends JPanel implements Runnable {
         return isValidPosition(worldX, worldY);
     }
 
-    // Find a random valid position for enemy
     private int[] findRandomValidPosition() {
         int attempts = 0;
         int maxAttempts = 100;
@@ -254,7 +253,6 @@ public class GamePanle extends JPanel implements Runnable {
                 state = GameState.VICTORY;
                 victoryAlpha = 0;
                 victoryTimer = 0;
-                System.out.println("Victory! All enemies defeated!");
                 return;
             }
 
@@ -271,7 +269,6 @@ public class GamePanle extends JPanel implements Runnable {
                     transitionAlpha = 0;
                     showDialog = false;
                     dialogTimer = 0;
-                    System.out.println("เริ่ม Transition ไปยังโหมด BATTLE กับ Enemy " + (i + 1) + "!");
                     break;
                 }
             }
@@ -289,7 +286,6 @@ public class GamePanle extends JPanel implements Runnable {
                 dialogTimer++;
                 if (dialogTimer >= DIALOG_DURATION) {
                     turnBase.initForEnemy(enemies[currentEnemyIndex]);
-                    System.out.println("ตั้งค่า currentEnemy: " + (currentEnemyIndex + 1) + " - isDead: " + enemies[currentEnemyIndex].isDead);
                     turnBase.battleDialogVisible = false;
                     turnBase.battleDialogText = "";
                     turnBase.battleDialogTimer = 0;
@@ -298,7 +294,6 @@ public class GamePanle extends JPanel implements Runnable {
                     turnBase.enemyActionTimer = 0;
                     turnBase.playerPostAttackCooldown = 0;
                     state = GameState.BATTLE;
-                    System.out.println("เปลี่ยนเป็นโหมด BATTLE - เริ่มการต่อสู้กับ Enemy " + (currentEnemyIndex + 1) + "!");
                 }
             }
         } else if (state == GameState.BATTLE) {

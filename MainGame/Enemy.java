@@ -11,7 +11,7 @@ public class Enemy {
     GamePanle gp;
     
     public int worldX, worldY, speed;
-    public boolean isDead = false; // สถานะการตาย
+    public boolean isDead = false; // เช็คว่าตายมั้ย
     private Random random = new Random();
     private int direction = 0; // 0=up, 1=down, 2=left, 3=right
     private int moveTimer = 0;
@@ -19,7 +19,7 @@ public class Enemy {
 
     // Sprite
     public BufferedImage sprite;
-    private int spriteVariant = 1; // 1..4 สำหรับไฟล์ pixil-enemy-*.png
+    private int spriteVariant = 1;
 
     public Enemy(GamePanle gp) {
         this.gp = gp;

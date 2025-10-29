@@ -13,47 +13,47 @@ public class TurnBase {
     int enemyAttack = 5;
     int turn = 0; // 0 = Player, 1 = Enemy
     
-    // Turn flow helpers
+    // คุมเทิร์น
     int enemyActionTimer = 0;
-    final int ENEMY_ACTION_DELAY = 45; // ~0.75s at 60 FPS
-    int playerPostAttackCooldown = 0; // prevent double inputs the same frame
+    final int ENEMY_ACTION_DELAY = 45; // หน่วงเวลา
+    int playerPostAttackCooldown = 0; // cooldown player
 
-    // Dialog flow (แบบ Pokémon): แสดงข้อความ เช่น "End Turn", "Enemy Turn"
+    // Dialog "End Turn", "Enemy Turn"
     boolean battleDialogVisible = false;
     String battleDialogText = "";
     int battleDialogTimer = 0;
-    int battleDialogStage = -1; // -1 none, 0: show first message, 1: second message
+    int battleDialogStage = -1; // -1 ไม่มี 0 ข้อความแรก 1 ข้อความสอง
     final int BATTLE_DIALOG_DURATION = 45;
     
-    // Enemy reference
     Enemy currentEnemy;
 
-    // Victory sequence after killing enemy
+    // Victory
     boolean victorySequence = false;
     int victoryTimer = 0;
     final int VICTORY_TEXT_DURATION = 90; // 1.5s
     int fadeAlpha = 0;
     final int FADE_SPEED = 10;
-    // Defeat sequence when player dies
+
+    // Defeat
     boolean defeatSequence = false;
     int defeatTimer = 0;
     final int DEFEAT_TEXT_DURATION = 90; // 1.5s
 
-    // กำหนดค่าสเตตัสตามสี (1=ฟ้า, 2=เหลือง, 3=ส้ม, 4=แดง)
+    // กำหนดค่าความเก่งตามสี (1=ฟ้า, 2=เหลือง, 3=ส้ม, 4=แดง)
     public void initForEnemy(Enemy enemy) {
         this.currentEnemy = enemy;
         int v = (enemy != null) ? enemy.getSpriteVariant() : 1;
         switch (v) {
-            case 1: // ฟ้า - อ่อนสุด
-                enemyMaxHP = 40; enemyAttack = 4; break;
+            case 1: // ฟ้า 
+                enemyMaxHP = 10; enemyAttack = 4; break;
             case 2: // เหลือง
-                enemyMaxHP = 60; enemyAttack = 6; break;
+                enemyMaxHP = 10; enemyAttack = 6; break;
             case 3: // ส้ม
-                enemyMaxHP = 80; enemyAttack = 8; break;
-            case 4: // แดง - เก่งสุด
-                enemyMaxHP = 100; enemyAttack = 10; break;
+                enemyMaxHP = 10; enemyAttack = 8; break;
+            case 4: // แดง
+                enemyMaxHP = 10; enemyAttack = 10; break;
             default:
-                enemyMaxHP = 50; enemyAttack = 5; break;
+                enemyMaxHP = 10; enemyAttack = 5; break;
         }
         enemyHP = enemyMaxHP;
         // ใช้ค่า HP ผู้เล่นที่คงอยู่ข้ามการต่อสู้
@@ -77,7 +77,7 @@ public class TurnBase {
     }
 
     public void update() {
-        // ระหว่างฉากจบเมื่อชนะ: แสดงข้อความและค่อยๆดำก่อนกลับสู่ Explore
+        // ตอนชนะแสดงข้อความและค่อยๆดำก่อนกลับสู่ Explore
         if (victorySequence) {
             // แสดงข้อความช่วงแรก
             if (victoryTimer < VICTORY_TEXT_DURATION) {
@@ -120,7 +120,7 @@ public class TurnBase {
             return;
         }
 
-        // ระหว่างฉากพ่ายแพ้: แสดงข้อความแล้วค่อยๆดำก่อนกลับ Title
+        // ตอนแพ้แสดงข้อความแล้วค่อยๆดำก่อนกลับ Title
         if (defeatSequence) {
             if (defeatTimer < DEFEAT_TEXT_DURATION) {
                 defeatTimer++;
@@ -231,7 +231,7 @@ public class TurnBase {
             }
         } else if (turn == 1) {
             // Enemy โจมตีอัตโนมัติหลังหน่วงเวลาเล็กน้อย
-            // หากกำลังแสดง dialog: ดำเนิน stage ของ dialog ก่อน
+            // ทำ dialog ก่อน
             if (battleDialogVisible) {
                 battleDialogTimer++;
                 if (battleDialogStage == 0 && battleDialogTimer >= BATTLE_DIALOG_DURATION) {
@@ -239,7 +239,7 @@ public class TurnBase {
                     battleDialogTimer = 0;
                     battleDialogStage = 1;
                 } else if (battleDialogStage == 1 && battleDialogTimer >= BATTLE_DIALOG_DURATION) {
-                    // ปิด dialog และเริ่มนับเวลาโจมตีของศัตรู
+                    // ปิด dialog
                     battleDialogVisible = false;
                     battleDialogText = "";
                     battleDialogTimer = 0;
